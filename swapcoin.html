@@ -1,0 +1,74 @@
+<head>
+  <title>swapcoin</title>
+</head>
+
+<body>
+
+</body>
+
+<template name="MainLayout">
+    {{> adminTools}}
+    {{> Template.dynamic template=content }}
+</template>
+
+<template name="startSwap">
+
+    <div class="start-swap-wrapper">
+
+        {{#if swapCompleted}}
+            <a class="has-completed-swap" href="/swap/{{swapCompleted}}">
+                You're swap just finished &raquo;
+            </a>
+        {{/if}}
+
+        {{#if swapInProgress}}
+            <a class="has-swap-in-progress" href="/swapping/{{swapInProgress}}">
+                You have a swap in progress &raquo;
+            </a>
+        {{/if}}
+
+        {{#if address}}
+            <h2>Your Bitcoin Address</h2>
+            <input type="text" name="bitcoin_address" value="{{address}}">
+        {{else}}
+          <h2>Enter your Bitcoin Address</h2>
+          <input type="text" name="bitcoin_address" placeholder="3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy">
+        {{/if}}
+        <button type="button" class="{{#if swapInProgress}}disabled{{/if}}">Swap Now &raquo;</button>
+
+    </div>
+
+</template>
+
+<template name="adminTools">
+    <ul id="admin_tools">
+        <li id="get_accounts">getAccounts</li>
+        <li id="current_user">currentUser</li>
+        <li><a href="/">home</a></li>
+    </ul>
+</template>
+
+<template name="swapping">
+    {{#with swapOffer}}
+        <div class="swap-in-progress">
+
+            <div class="sk-double-bounce">
+                <div class="sk-child sk-double-bounce1"></div>
+                <div class="sk-child sk-double-bounce2"></div>
+            </div>
+
+            <h2>Requesting swap...</h2>
+            <a class="cancel-swap" href="">Cancel Swap</a>
+        </div>
+    {{/with}}
+</template>
+
+<template name="swapReceipt">
+    <div class="swap-receipt">
+        {{#with receipt}}
+            <h2>Amount Spent: {{value}}</h2>
+            <h2>Amount Received: {{received_value swapped_with}}</h2>
+            <h2>Paid? {{#if completed}}Yes{{else}}No{{/if}}</h2>
+        {{/with}}
+    </div>
+</template>
