@@ -58,8 +58,11 @@
             </div>
 
             <h2>Requesting swap...</h2>
-            <a class="cancel-swap" href="">Cancel Swap</a>
+            <a class="cancel-swap" href="">[x] Cancel Swap</a>
         </div>
+
+        {{> requestPayment}}
+
     {{/with}}
 </template>
 
@@ -70,5 +73,21 @@
             <h2>Amount Received: {{received_value swapped_with}}</h2>
             <h2>Paid? {{#if completed}}Yes{{else}}No{{/if}}</h2>
         {{/with}}
+    </div>
+</template>
+
+<template name="requestPayment">
+    <div class="payment-request-popup-wrapper animated fadeIn">
+        <div class="payment-request-popup animated slideInUp">
+            <h3>Amount Due:</h3>
+            <h1>${{value}}</h1>
+            <p>
+                Address:
+            </p>
+            <a href="bitcoin:mvfFfHvzxsbBvTDjWGJ9N6qmWCqfGp65tq?amount=0.001" target="_blank">mvfFfHvzxsbBvTDjWGJ9N6qmWCqfGp65tq</a>
+            <p>
+                Waiting for payment...
+            </p>
+        </div>
     </div>
 </template>

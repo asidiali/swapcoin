@@ -74,8 +74,7 @@ Schemas.SwapReceipt = new SimpleSchema({
     },
     "completed": {
         type: Boolean,
-        label: "Whether swap has been paid",
-        optional: true
+        label: "Whether swap has been paid"
     },
     "cancelled": {
         type: Boolean,
@@ -113,6 +112,10 @@ Schemas.SwapOffer = new SimpleSchema({
             return amtInUSD;
         }
     },
+    "completed": {
+        type: Boolean,
+        label: "Whether swap has been paid"
+    }
 
 });
 
@@ -210,7 +213,7 @@ if (Meteor.isClient) {
       var swap_in_progress = Session.get("currentOffer");
 
       if (!swap_in_progress) {
-          SwapOffers.insert({}, function (err,id) {
+          SwapOffers.insert({completed:false}, function (err,id) {
               FlowRouter.go("/swapping/" + id)
               Session.set("currentOffer", id);
           })
