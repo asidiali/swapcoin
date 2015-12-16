@@ -12,7 +12,6 @@ if (Meteor.isServer) {
     Future = Meteor.npmRequire('fibers/future');
 
     var Client = Coinbase.Client;
-    //var client = new Coinbase.Client({'apiKey': 'tNQSnHsEDvbQ9JiP', 'apiSecret': 'eRfVgkQzAKk6uq6RqjcbMdrj7oFmOzHR'});
 
     client = new Client({
         'apiKey': 'e7k3txGezcpvMqss',
