@@ -9,6 +9,7 @@
 if (Meteor.isServer) {
     chalk = Meteor.npmRequire( 'chalk' );
     Coinbase = Meteor.npmRequire( 'coinbase' );
+    Future = Meteor.npmRequire('fibers/future');
 
     var Client = Coinbase.Client;
     //var client = new Coinbase.Client({'apiKey': 'tNQSnHsEDvbQ9JiP', 'apiSecret': 'eRfVgkQzAKk6uq6RqjcbMdrj7oFmOzHR'});
@@ -235,10 +236,19 @@ if (Meteor.isClient) {
           } else if (offerId && receipt && receipt.offerId) {
               if (offerId == receipt.offerId) return FlowRouter.go("/swap/"+receipt._id)
           }
-      }
+      },
+      "fullBitcoinAddress": function () {
+          return null;
+      },
   })
 
   Template.swapping.onRendered(function () {
+
+      Meteor.call("getExchange", "USD", function (err,res) {
+          console.log(res.data.rates.BTC);
+          if (res.data.rates.BTC) Session.set("amtBTC", res.data.rates.BTC);
+      })
+
       var self = this;
       var loadedTime = new Date();
       var offerId = FlowRouter.getParam("swapId");
@@ -286,6 +296,15 @@ if (Meteor.isClient) {
           var receipt = SwapReceipts.findOne(id);
           if (receipt) return receipt.value
       }
+  })
+
+
+  Template.requestPayment.helpers({
+
+      "amtBTC": function () {
+          return Session.get("amtBTC")*Template.instance().data.value;
+      }
+
   })
 
 }
@@ -381,6 +400,15 @@ if (Meteor.isServer) {
                                     console.log(tx);
                                   });
             });
+        },
+        "getExchange": function (ex) {
+            var getExchangeFuture = new Future();
+
+            client.getExchangeRates({"currency": ex}, function (err,rates) {
+                getExchangeFuture.return(rates);
+            })
+
+            return getExchangeFuture.wait();
         }
     })
 }

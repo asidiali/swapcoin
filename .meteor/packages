@@ -22,6 +22,7 @@ parlay:coinbase
 meteorhacks:async
 meteorhacks:npm
 npm-container
+http
 
 autopublish
 insecure
