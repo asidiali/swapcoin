@@ -70,6 +70,7 @@ Schemas.SwapReceipt = new SimpleSchema({
     },
     "value": {
         type: Number,
+        decimal: true,
         label: "Value of swap offer"
     },
     "completed": {
@@ -108,9 +109,10 @@ Schemas.SwapOffer = new SimpleSchema({
         type: Number,
         label: "Value of swap offer",
         autoValue: function () {
-            var amtInUSD = Math.floor(Math.random() * 10) + 1; // get random num between 1-5
+            var amtInUSD = Math.round( (Math.random() * 10) * 1e2 ) / 1e2; // get random num between 1-10
             return amtInUSD;
-        }
+        },
+        decimal: true
     },
     "completed": {
         type: Boolean,
@@ -235,10 +237,7 @@ if (Meteor.isClient) {
           } else if (offerId && receipt && receipt.offerId) {
               if (offerId == receipt.offerId) return FlowRouter.go("/swap/"+receipt._id)
           }
-      },
-      "fullBitcoinAddress": function () {
-          return null;
-      },
+      }
   })
 
   Template.swapping.onRendered(function () {
@@ -302,6 +301,10 @@ if (Meteor.isClient) {
 
       "amtBTC": function () {
           return Session.get("amtBTC")*Template.instance().data.value;
+      },
+      "fullBitcoinAddress": function (amt, id) {
+          var btc = amt*Session.get("amtBTC")
+          return "bitcoin:mvfFfHvzxsbBvTDjWGJ9N6qmWCqfGp65tq?amount="+btc+"&message="+id;
       }
 
   })
@@ -397,7 +400,7 @@ if (Meteor.isServer) {
                                  'description': 'swapcoin transaction for $' + amtInUSD,
                                  'currency': 'BTC'}, function(err, tx) {
                                     console.log(tx);
-                                  });
+                                });
             });
         },
         "getExchange": function (ex) {
