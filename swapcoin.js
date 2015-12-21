@@ -40,6 +40,7 @@ SimpleSchema.debug = true
 
 SwapReceipts = new Mongo.Collection("swap_receipts");
 SwapOffers = new Mongo.Collection("swap_offers");
+TransactionHistory = new Mongo.Collection("transaction_history");
 
 if (Meteor.isServer) {
     SwapReceipts._ensureIndex({ "offeredBy": 1});
@@ -172,12 +173,15 @@ FlowRouter.route("/swap/:swapId", {
 if (Meteor.isClient) {
 
     Template.adminTools.events({
-      'click #current_user': function () {
-        console.log(Meteor.user())
-    },
-    'click #get_accounts': function () {
-      Meteor.call("getAccounts")
-    }
+        'click #current_user': function () {
+            console.log(Meteor.user())
+        },
+        'click #get_accounts': function () {
+            Meteor.call("getAccounts")
+        },
+        'click #get_transactions': function () {
+            Meteor.call("getTransactionHistory")
+        }
     });
 
 
@@ -243,7 +247,6 @@ if (Meteor.isClient) {
   Template.swapping.onRendered(function () {
 
       Meteor.call("getExchange", "USD", function (err,res) {
-          console.log(res.data.rates.BTC);
           if (res.data.rates.BTC) Session.set("amtBTC", res.data.rates.BTC);
       })
 
@@ -251,7 +254,6 @@ if (Meteor.isClient) {
       var loadedTime = new Date();
       var offerId = FlowRouter.getParam("swapId");
       if (offerId) {
-          console.log("finding receipts")
           var receipts = SwapReceipts.find({"offerId": offerId}).observe({
               added: function (receipt) {
                   if (FlowRouter.getParam("swapId") && offerId == receipt.offerId) {
@@ -273,7 +275,6 @@ if (Meteor.isClient) {
           swap.cancelled = true;
           swap.offerId = swap._id;
           delete swap._id;
-          console.log(swap)
           SwapReceipts.insert(swap, function () {
               SwapOffers.remove(swap.offerId);
               FlowRouter.go("/")
@@ -304,7 +305,7 @@ if (Meteor.isClient) {
       },
       "fullBitcoinAddress": function (amt, id) {
           var btc = amt*Session.get("amtBTC")
-          return "bitcoin:mvfFfHvzxsbBvTDjWGJ9N6qmWCqfGp65tq?amount="+btc+"&message="+id;
+          return "bitcoin:mvfFfHvzxsbBvTDjWGJ9N6qmWCqfGp65tq?amount="+btc+"&description="+id;
       }
 
   })
@@ -323,8 +324,6 @@ if (Meteor.isServer) {
 
     chalk.enabled = true;
 
-    console.log( chalk.green( "testing chalk" ) );
-
     var makeMatch = function (offer) {
         if (SwapOffers.find({"_id": {$ne: offer._id}}).count() > 0) {
             console.log("offers available")
@@ -332,14 +331,50 @@ if (Meteor.isServer) {
             if (offer && match) {
                 var offerId = offer._id;
                 var matchId = match._id;
-                console.log("found match")
                 createReceipt(offer, function (offerReceiptId) {
                     createReceipt(match, function (matchReceiptId) {
                         SwapReceipts.update(offerReceiptId, {$set: {swapped_with: matchReceiptId}}, function () {
                             SwapOffers.remove(offerId);
-                        })
-                        SwapReceipts.update(matchReceiptId, {$set: {swapped_with: offerReceiptId}}, function () {
-                            SwapOffers.remove(matchId);
+                            SwapReceipts.update(matchReceiptId, {$set: {swapped_with: offerReceiptId}}, function () {
+                                SwapOffers.remove(matchId);
+
+                                // both offers have been removed, time to send payments and mark receipts as paid
+                                var user1 = Meteor.users.findOne(offer.offeredBy);
+                                var user2 = Meteor.users.findOne(match.offeredBy);
+
+
+                                var exchange_rate;
+
+                                Meteor.call("getExchange", "USD", function (err,res) {
+                                    if (res.data.rates.BTC) {
+                                        exchange_rate = res.data.rates.BTC;
+                                        if (user1 && user2 && exchange_rate) {
+
+                                            console.log("btc address for user 1: " + user1.profile.bitcoin_address)
+                                            console.log("btc address for user 2: " + user2.profile.bitcoin_address)
+                                            console.log("exchange rate at "+ exchange_rate)
+
+                                            var btcForUser1 = match.value*exchange_rate*10;
+                                            var btcForUser2 = offer.value*exchange_rate*10;
+
+                                            Meteor.call("sendBitcoin", btcForUser1, user1.profile.bitcoin_address, function (err,res) {
+                                                if (err) console.log(err);
+                                                console.log("payment for user 1 sent")
+
+                                                Meteor.call("sendBitcoin", btcForUser2, user2.profile.bitcoin_address, function (err,res) {
+                                                    if (err) console.log(err);
+                                                    console.log("payment for user 2 sent")
+                                                })
+                                            })
+
+                                        }
+                                    }
+
+                                })
+
+
+
+                            })
                         })
                     })
                 })
@@ -350,7 +385,7 @@ if (Meteor.isServer) {
     var createReceipt = function (offer, callback) {
         offer.offerId = offer._id;
         delete offer._id;
-        console.log("creating receipt for offer:" + offer)
+        console.log("creating receipt for offer:" + offer.offerId)
         SwapReceipts.insert(offer, function (err,id) {
             if (err) { console.log(err) }
             console.log("new receipt: " + id)
@@ -366,6 +401,26 @@ if (Meteor.isServer) {
             console.log("offer removed");
         }
     })
+
+    // check every 3 seconds for new transactions from coinbase
+    var importTxns = Meteor.setInterval(function () {
+        Meteor.call("getTransactionHistory", function (err,txns) {
+            var newTxns = false;
+            _.each(txns, function (txn) {
+                var savedtxn = TransactionHistory.findOne({transaction_id: txn.id});
+                if (!savedtxn) {
+                    newTxns = true;
+                    var newtxn = txn;
+                    newtxn["transaction_id"] = txn.id;
+                    delete newtxn.id;
+                    TransactionHistory.insert(newtxn, function (err, id) {
+                        console.log("added txn history ID " + id + " for txn " + newtxn.transaction_id)
+                    })
+                }
+            })
+            if (!newTxns) console.log(chalk.green("No new transactions."))
+        })
+    }, 3000)
 
 }
 
@@ -386,23 +441,38 @@ Meteor.methods({
 if (Meteor.isServer) {
     Meteor.methods({
         "getAccounts": function () {
-
             client.getAccounts({}, function(err, accounts) {
               console.log(accounts)
             });
         },
-        "sendBitcoin": function (address) {
-            var amtInUSD = Math.floor(Math.random() * 10) + 1;
-            console.log("sending $" + amtInUSD);
+        "sendBitcoin": function (originalAmt, address) {
+            check(originalAmt, Number)
+            var amtBtc = originalAmt;
+            console.log("sending " + amtBtc + " BTC");
             client.getAccount('790a703c-7de7-522e-9c9d-027b15292a73', function(err, account) {
               account.sendMoney({'to': address,
-                                 'amount': '0.00414',
-                                 'description': 'swapcoin transaction for $' + amtInUSD,
-                                 'currency': 'BTC'}, function(err, tx) {
-                                    console.log(tx);
-                                });
+                                 'amount': amtBtc,
+                                 'description': 'Thanks for using Swapcoin!',
+                                 'currency': 'BTC'}, function (tx) {
+                                     console.log("===========");
+                                     console.log(tx);
+                                     console.log("===========");
+                                 });
             });
         },
+
+        "getTransactionHistory": function () {
+            var getLatestTransactionHistory = new Future();
+
+            client.getAccount('790a703c-7de7-522e-9c9d-027b15292a73', function(err, account) {
+                account.getTransactions(null, function(err, txs) { // null will return all history instead of just one ID
+                    getLatestTransactionHistory.return(txs);
+                });
+            });
+
+            return getLatestTransactionHistory.wait();
+        },
+
         "getExchange": function (ex) {
             var getExchangeFuture = new Future();
 
