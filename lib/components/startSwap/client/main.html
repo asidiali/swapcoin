@@ -1,0 +1,28 @@
+<template name="startSwap">
+
+    <div class="start-swap-wrapper">
+
+        {{#if swapCompleted}}
+            <a class="has-completed-swap" href="/swap/{{swapCompleted}}">
+                You're swap just finished &raquo;
+            </a>
+        {{/if}}
+
+        {{#if swapInProgress}}
+            <a class="has-swap-in-progress" href="/swapping/{{swapInProgress}}">
+                You have a swap in progress &raquo;
+            </a>
+        {{/if}}
+
+        {{#if address}}
+            <h2>Your Bitcoin Address</h2>
+            <input type="text" name="bitcoin_address" value="{{address}}">
+        {{else}}
+          <h2>Enter your Bitcoin Address</h2>
+          <input type="text" name="bitcoin_address" placeholder="3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy">
+        {{/if}}
+        <button type="button" class="{{#if swapInProgress}}disabled{{/if}}">Swap Now &raquo;</button>
+
+    </div>
+
+</template>
