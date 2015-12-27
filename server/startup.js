@@ -17,8 +17,13 @@ Meteor.startup( function () {
 
     SwapOffers.find().observe({
         "added": function (offer) {
-            makeMatch(offer);
+            console.log("offer #" + offer._id + " available")
         },
+
+        "changed": function (newDoc, oldDoc) {
+            if (newDoc.completed) makeMatch(newDoc);
+        },
+
         "removed": function () {
             console.log("offer removed");
         }
@@ -51,7 +56,7 @@ Meteor.startup( function () {
 /*
 ====================================
 ====================================
- server functions 
+ server functions
 ====================================
 ====================================
 */
@@ -105,11 +110,11 @@ var makeMatch = function (offer) {
                                         Meteor.call("sendBitcoin", btcForUser1, user1.profile.bitcoin_address, function (err,res) {
                                             if (err) console.log(err);
                                             console.log("payment for user 1 sent")
+                                        })
 
-                                            Meteor.call("sendBitcoin", btcForUser2, user2.profile.bitcoin_address, function (err,res) {
-                                                if (err) console.log(err);
-                                                console.log("payment for user 2 sent")
-                                            })
+                                        Meteor.call("sendBitcoin", btcForUser2, user2.profile.bitcoin_address, function (err,res) {
+                                            if (err) console.log(err);
+                                            console.log("payment for user 2 sent")
                                         })
 
                                     }

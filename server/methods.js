@@ -5,6 +5,7 @@ Meteor.methods({
         });
     },
     "sendBitcoin": function (originalAmt, address) {
+        this.unblock()
         check(originalAmt, Number)
         var amtBtc = originalAmt;
         console.log("sending " + amtBtc + " BTC");
