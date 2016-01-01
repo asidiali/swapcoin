@@ -24,6 +24,7 @@ meteorhacks:async
 meteorhacks:npm
 npm-container
 http
+cosmos:browserify
 
 autopublish
 insecure

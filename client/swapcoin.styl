@@ -5,9 +5,20 @@ html,body
 
 body
     padding-top 100px
+    background-color transparent
 
 .animated
     animation-duration 500ms
+
+#animationDiv
+    height 100vh
+    width 100vw
+    position fixed
+    top 0
+    left 0
+    right 0
+    bottom 0
+    z-index -1
 
 #admin_tools
     position fixed
@@ -18,14 +29,17 @@ body
     list-style none
     display flex
     flex-flow row wrap
-    background-color #1bb23a
-    padding 10px
+    background-color transparent
+    padding 5px
     box-sizing border-box
 
     li
         font-weight 400
         margin-right 10px
         color #ddd
+
+        img
+            max-height 35px
 
         &:hover
             color #fff
@@ -53,10 +67,18 @@ body
         background-color teal
         color #fff
 
+    img
+        max-width 200px
+        margin 20px auto
+        display block
+
     h2
         text-align center
-        font-size 40px
+        font-size 30px
         margin 0 0 20px 0
+        color #fff
+        text-transform uppercase
+        font-weight 300
 
     input
         padding 10px

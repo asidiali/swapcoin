@@ -169,6 +169,9 @@
     },
     "future": {
       "version": "2.3.1"
+    },
+    "three": {
+      "version": "0.73.0"
     }
   }
 }
