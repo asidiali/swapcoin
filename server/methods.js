@@ -21,16 +21,16 @@ Meteor.methods({
         });
     },
 
-    "getTransactionHistory": function () {
-        var getLatestTransactionHistory = new Future();
+    "getTransactions": function () {
+        var getLatestTransactions = new Future();
 
         client.getAccount('790a703c-7de7-522e-9c9d-027b15292a73', function(err, account) {
             account.getTransactions(null, function(err, txs) { // null will return all history instead of just one ID
-                getLatestTransactionHistory.return(txs);
+                getLatestTransactions.return(txs);
             });
         });
 
-        return getLatestTransactionHistory.wait();
+        return getLatestTransactions.wait();
     },
 
     "getExchange": function (ex) {

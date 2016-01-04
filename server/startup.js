@@ -15,13 +15,13 @@ Meteor.startup( function () {
 
     chalk.enabled = true;
 
-    SwapOffers.find().observe({
+    Offers.find().observe({
         "added": function (offer) {
             console.log("offer #" + offer._id + " available")
         },
 
         "changed": function (newDoc, oldDoc) {
-            if (newDoc.completed) makeMatch(newDoc);
+            if (newDoc.paid) makeMatch(newDoc);
         },
 
         "removed": function () {
@@ -31,23 +31,23 @@ Meteor.startup( function () {
 
     // check every 3 seconds for new transactions from coinbase
     var importTxns = Meteor.setInterval(function () {
-        Meteor.call("getTransactionHistory", function (err,txns) {
+        Meteor.call("getTransactions", function (err,txns) {
             var newTxns = false;
             _.each(txns, function (txn) {
-                var savedtxn = TransactionHistory.findOne({transaction_id: txn.id});
+                var savedtxn = Transactions.findOne({transaction_id: txn.id});
                 if (!savedtxn) {
                     newTxns = true;
                     var newtxn = txn;
                     newtxn["transaction_id"] = txn.id;
                     delete newtxn.id;
-                    TransactionHistory.insert(newtxn, function (err, id) {
+                    Transactions.insert(newtxn, function (err, id) {
                         console.log("added txn history ID " + id + " for txn " + newtxn.transaction_id)
                     })
                 }
             })
-            if (!newTxns) console.log(chalk.green("No new transactions."))
+            if (!newTxns) console.log(chalk.blue("No new transactions."))
         })
-    }, 3000)
+    }, 5000)
 
 
 });
@@ -63,10 +63,10 @@ Meteor.startup( function () {
 
 
 var createReceipt = function (offer, callback) {
-    offer.offerId = offer._id;
+    offer.offer_id = offer._id; // save original offer id before stripping it from offer obj
     delete offer._id;
-    console.log("creating receipt for offer:" + offer.offerId)
-    SwapReceipts.insert(offer, function (err,id) {
+    console.log("creating receipt for offer:" + offer.offer_id)
+    Receipts.insert(offer, function (err,id) {
         if (err) { console.log(err) }
         console.log("new receipt: " + id)
         callback(id);
@@ -75,22 +75,22 @@ var createReceipt = function (offer, callback) {
 
 
 var makeMatch = function (offer) {
-    if (SwapOffers.find({"_id": {$ne: offer._id}}).count() > 0) {
+    if (Offers.find({ "_id": { $ne: offer._id }, "paid": true }).count() > 0) {
         console.log("offers available")
-        var match = SwapOffers.findOne({"_id": {$ne: offer._id}});
+        var match = Offers.findOne({"_id": {$ne: offer._id}});
         if (offer && match) {
             var offerId = offer._id;
             var matchId = match._id;
             createReceipt(offer, function (offerReceiptId) {
                 createReceipt(match, function (matchReceiptId) {
-                    SwapReceipts.update(offerReceiptId, {$set: {swapped_with: matchReceiptId}}, function () {
-                        SwapOffers.remove(offerId);
-                        SwapReceipts.update(matchReceiptId, {$set: {swapped_with: offerReceiptId}}, function () {
-                            SwapOffers.remove(matchId);
+                    Receipts.update(offerReceiptId, {$set: {swap_id: matchReceiptId}}, function () {
+                        Offers.remove(offerId);
+                        Receipts.update(matchReceiptId, {$set: {swap_id: offerReceiptId}}, function () {
+                            Offers.remove(matchId);
 
                             // both offers have been removed, time to send payments and mark receipts as paid
-                            var user1 = Meteor.users.findOne(offer.offeredBy);
-                            var user2 = Meteor.users.findOne(match.offeredBy);
+                            var user1 = Meteor.users.findOne(offer.offered_by);
+                            var user2 = Meteor.users.findOne(match.offered_by);
 
 
                             var exchange_rate;

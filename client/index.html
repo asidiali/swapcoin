@@ -7,64 +7,7 @@
 </body>
 
 <template name="MainLayout">
-    {{> adminTools}}
+
     {{> Template.dynamic template=content }}
-</template>
-
-<template name="adminTools">
-    <ul id="admin_tools">
-        <li><img src="assets/swapcoin_text.png" alt="" /></li>
-        <li id="get_accounts">getAccounts</li>
-        <li id="get_transactions">getTransactions</li>
-        <li id="current_user">currentUser</li>
-        <li><a href="/">home</a></li>
-    </ul>
-
-    <div id="animationDiv">
-
-    </div>
-</template>
-
-<template name="swapping">
-    {{#with swapOffer}}
-        <div class="swap-in-progress">
-
-            <div class="sk-double-bounce">
-                <div class="sk-child sk-double-bounce1"></div>
-                <div class="sk-child sk-double-bounce2"></div>
-            </div>
-
-            <h2>Requesting swap...</h2>
-            <a class="cancel-swap" href="">[x] Cancel Swap</a>
-        </div>
-
-        {{> requestPayment}}
-
-    {{/with}}
-</template>
-
-<template name="swapReceipt">
-    <div class="swap-receipt">
-        {{#with receipt}}
-            <h2>Amount Spent: {{value}}</h2>
-            <h2>Amount Received: {{received_value swapped_with}}</h2>
-            <h2>Paid? {{#if completed}}Yes{{else}}No{{/if}}</h2>
-        {{/with}}
-    </div>
-</template>
-
-<template name="requestPayment">
-    <div class="payment-request-popup-wrapper animated fadeIn">
-        <div class="payment-request-popup animated slideInUp">
-            <h3>Amount Due:</h3>
-            <h1>${{value}} USD // {{amtBTC}} BTC</h1>
-            <p>
-                Address:
-            </p>
-            <a href="{{fullBitcoinAddress value offeredBy}}" target="_blank">Click here to send</a>
-            <p>
-                Waiting for payment...
-            </p>
-        </div>
-    </div>
+    
 </template>

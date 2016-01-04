@@ -1,0 +1,9 @@
+<template name="swapReceipt">
+    <div class="swap-receipt">
+        {{#with receipt}}
+            <h2>Amount Spent: {{value}}</h2>
+            <h2>Amount Received: {{received_value swap_id}}</h2>
+            <h2>Paid? {{#if completed}}Yes{{else}}No{{/if}}</h2>
+        {{/with}}
+    </div>
+</template>

@@ -1,0 +1,28 @@
+<template name="swapping">
+    {{#with swapOffer}}
+        <div class="swap-in-progress">
+
+            <div class="sk-double-bounce">
+                <div class="sk-child sk-double-bounce1"></div>
+                <div class="sk-child sk-double-bounce2"></div>
+            </div>
+
+            <h2>Requesting payment...</h2>
+
+            <h5>Amount Due:</h5>
+            <h3>${{value}} USD // {{amtBTC}} BTC</h3>
+            <p>
+                Address:
+            </p>
+            <a href="{{fullBitcoinAddress value offeredBy}}" target="_blank">Click here to send</a>
+            <p>
+                Waiting for payment...
+            </p>
+
+            <a class="cancel-swap" href="">[x] Cancel Swap</a>
+        </div>
+
+    {{/with}}
+
+
+</template>

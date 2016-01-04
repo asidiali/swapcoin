@@ -7,12 +7,12 @@ Template.startSwap.helpers({
     },
     swapInProgress: function () {
         var offerId = Session.get("currentOffer");
-        var receipt = Session.get("currentReceipt") || SwapReceipts.findOne({"offerId": offerId});
+        var receipt = Session.get("currentReceipt") || Receipts.findOne({"offerId": offerId});
         if (offerId && !receipt) return offerId;
     },
     swapCompleted: function () {
         var offerId = Session.get("currentOffer");
-        var receipt = Session.get("currentReceipt") || SwapReceipts.findOne({"offerId": offerId});
+        var receipt = Session.get("currentReceipt") || Receipts.findOne({"offerId": offerId});
         if (offerId && receipt && receipt.offerId) {
             if (receipt.offerId == offerId) return receipt._id;
         }
@@ -21,7 +21,7 @@ Template.startSwap.helpers({
 
 Template.startSwap.events({
   'click button': function () {
-    // increment the counter when button is clicked
+
     var address = $("input").val();
     console.log(address)
 
@@ -33,7 +33,7 @@ Template.startSwap.events({
     var swap_in_progress = Session.get("currentOffer");
 
     if (!swap_in_progress) {
-        SwapOffers.insert({completed:false}, function (err,id) {
+        Offers.insert({ paid:false }, function (err,id) {
             FlowRouter.go("/swapping/" + id)
             Session.set("currentOffer", id);
         })
