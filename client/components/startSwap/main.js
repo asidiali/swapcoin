@@ -6,15 +6,17 @@ Template.startSwap.helpers({
         }
     },
     swapInProgress: function () {
-        var offerId = Session.get("currentOffer");
-        var receipt = Session.get("currentReceipt") || Receipts.findOne({"offerId": offerId});
-        if (offerId && !receipt) return offerId;
+        var offer = Offers.findOne({"offered_by": Meteor.userId()});
+        if (offer) {
+            var receipt = Receipts.findOne({"offer_id": offer._id});
+        }
+        if (offer && offer._id && !receipt) return offer._id;
     },
     swapCompleted: function () {
         var offerId = Session.get("currentOffer");
-        var receipt = Session.get("currentReceipt") || Receipts.findOne({"offerId": offerId});
-        if (offerId && receipt && receipt.offerId) {
-            if (receipt.offerId == offerId) return receipt._id;
+        var receipt = Session.get("currentReceipt") || Receipts.findOne({"offer_id": offerId});
+        if (offerId && receipt && receipt.offer_id) {
+            if (receipt.offer_id == offerId) return receipt._id;
         }
     }
 });
